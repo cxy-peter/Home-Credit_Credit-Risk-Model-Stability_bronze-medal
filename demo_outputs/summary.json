@@ -1,0 +1,41 @@
+{
+  "config": {
+    "id_col": "case_id",
+    "target_col": "target",
+    "week_col": "week_num",
+    "reference_fraction": 0.7,
+    "n_bins": 10,
+    "max_categories": 100,
+    "sparse_threshold": 0.95,
+    "extreme_sparse_threshold": 0.995,
+    "high_psi_threshold": 0.25,
+    "correlation_threshold": 0.9,
+    "correlation_sample_rows": 50000,
+    "random_state": 42,
+    "dataset_label": "Deterministic synthetic smoke data — not final Kaggle results",
+    "source_url": null,
+    "synthetic_demo": true
+  },
+  "dataset_label": "Deterministic synthetic smoke data — not final Kaggle results",
+  "synthetic_demo": true,
+  "rows": 12000,
+  "features": 15,
+  "weeks": 60,
+  "bad_count": 591,
+  "bad_rate": 0.04925,
+  "reference_week_min": 0.0,
+  "reference_week_max": 41.0,
+  "actual_week_min": 42.0,
+  "actual_week_max": 59.0,
+  "status_counts": {
+    "CONSTANT_REVIEW": 2,
+    "EXTREME_SPARSE_REVIEW": 1,
+    "HIGH_DRIFT_REVIEW": 2,
+    "KEEP_CANDIDATE": 9,
+    "SPARSE_RESCUE_CANDIDATE": 1
+  },
+  "oof_scores": [
+    "existing_simulated_oof",
+    "challenger_simulated_oof"
+  ]
+}

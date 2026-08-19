@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+*.egg-info/
+build/
+dist/
+
+# Kaggle inputs are downloaded locally and are not committed.
+data/kaggle/
+demo_data/
+
+# Ad-hoc real runs should use a separate directory. The checked-in
+# real_outputs/ folder is the reproducible report generated for this revision.
+real_outputs_local/

@@ -1,0 +1,2 @@
+feature_a,feature_b,spearman,abs_spearman,recommend_keep,recommend_review,reason
+income_amt,income_duplicate_corr,0.9998957199,0.9998957199,income_amt,income_duplicate_corr,"higher IV, then lower PSI/missingness; confirm business meaning before removal"

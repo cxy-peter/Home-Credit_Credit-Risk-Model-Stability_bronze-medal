@@ -1,0 +1,37 @@
+{
+  "config": {
+    "id_col": "case_id",
+    "target_col": "target",
+    "week_col": "week_num",
+    "reference_fraction": 0.7,
+    "n_bins": 10,
+    "max_categories": 100,
+    "sparse_threshold": 0.95,
+    "extreme_sparse_threshold": 0.995,
+    "high_psi_threshold": 0.25,
+    "correlation_threshold": 0.9,
+    "correlation_sample_rows": 50000,
+    "random_state": 42,
+    "dataset_label": "Kaggle diarray base_100features.parquet",
+    "source_url": "https://www.kaggle.com/datasets/diarray/deep-feature-synthesis-home-credit-stability",
+    "synthetic_demo": false
+  },
+  "dataset_label": "Kaggle diarray base_100features.parquet",
+  "synthetic_demo": false,
+  "rows": 1526659,
+  "features": 100,
+  "weeks": 92,
+  "bad_count": 47994,
+  "bad_rate": 0.03143727577671242,
+  "reference_week_min": 0.0,
+  "reference_week_max": 63.0,
+  "actual_week_min": 64.0,
+  "actual_week_max": 91.0,
+  "status_counts": {
+    "CONSTANT_REVIEW": 2,
+    "HIGH_DRIFT_REVIEW": 26,
+    "KEEP_CANDIDATE": 67,
+    "TIME_PROXY_REVIEW": 5
+  },
+  "oof_scores": []
+}

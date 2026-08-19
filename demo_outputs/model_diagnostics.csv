@@ -1,0 +1,3 @@
+score,n_scored,bad_rate,auc,ks,lift_10,lift_20,stability,mean_weekly_gini,gini_slope,gini_residual_std,weeks_scored,weeks_skipped_single_class,provenance
+existing_simulated_oof,12000,0.04925,0.5683524703,0.1105930708,1.387478849,1.421319797,0.04884860115,0.1448341493,0.001166693746,0.1919710963,60,0,deterministic synthetic simulated score; smoke validation only
+challenger_simulated_oof,12000,0.04925,0.5637178414,0.09383454953,1.556683587,1.370558376,0.04149902462,0.1312609239,0.001528518066,0.1795237986,60,0,deterministic synthetic simulated score; smoke validation only

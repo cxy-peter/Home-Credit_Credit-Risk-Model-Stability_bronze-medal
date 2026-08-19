@@ -1,0 +1,3 @@
+period,week_min,week_max,week_count,row_count,bad_rate
+reference,0,41,42,8400,0.04916666667
+actual,42,59,18,3600,0.04944444444
