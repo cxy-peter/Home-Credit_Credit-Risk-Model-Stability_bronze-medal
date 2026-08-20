@@ -86,9 +86,16 @@ def _resolve_column(frame: pd.DataFrame, requested: str) -> str:
     raise ValueError(f"Column name {requested!r} is ambiguous: {matches}")
 
 
-def normalize_customer_frame(frame: pd.DataFrame, config: DiagnosticsConfig) -> pd.DataFrame:
+def normalize_customer_frame(
+    frame: pd.DataFrame,
+    config: DiagnosticsConfig,
+    *,
+    copy: bool = True,
+) -> pd.DataFrame:
     expected = [config.id_col, config.target_col, config.week_col]
-    normalized = restore_named_index_columns(frame, expected).copy()
+    normalized = restore_named_index_columns(frame, expected)
+    if copy:
+        normalized = normalized.copy()
     rename: dict[str, str] = {}
     for requested in expected:
         actual = _resolve_column(normalized, requested)

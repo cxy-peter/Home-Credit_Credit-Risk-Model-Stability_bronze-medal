@@ -13,3 +13,6 @@ demo_data/
 # Ad-hoc real runs should use a separate directory. The checked-in
 # real_outputs/ folder is the reproducible report generated for this revision.
 real_outputs_local/
+
+# Track B model files and OOF runs are generated locally.
+track_b_outputs*/

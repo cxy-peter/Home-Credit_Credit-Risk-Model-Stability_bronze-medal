@@ -1,11 +1,15 @@
 # Home Credit Risk Diagnostics V3
 
 > [中文完整结果报告：真实数据、执行过程、关键结果与限制](docs/RESULT_REPORT_ZH.md)
+>
+> [Track B 中文训练手册：LightGBM/XGBoost Rolling OOF](docs/TRACK_B_MODELING_ZH.md)
+>
+> [Track B 已核验的完整 8 折轻量结果快照](track_b_results/README.md)
 
-This repository keeps the two original competition notebooks unchanged and adds a
-standalone diagnostic layer for an **existing customer-level feature parquet**.
-Diagnostics V3 does not rebuild the raw multi-table features and does not rerun the
-LightGBM/CatBoost training flow.
+This repository keeps the two original competition notebooks unchanged. The
+Diagnostics V3 `run` path analyzes an **existing customer-level feature parquet**
+without rebuilding the raw tables or rerunning the original LightGBM/CatBoost flow.
+The separate Track B `train-track-b` path does train new LightGBM/XGBoost models.
 
 The diagnostic layer provides:
 
@@ -18,6 +22,9 @@ The diagnostic layer provides:
 - deterministic sampled Spearman correlation review recommendations;
 - optional, exactly `case_id`-aligned OOF AUC/KS/Lift and Home Credit weekly Gini stability.
 
+Track B now adds an independent `train-track-b` path for label-delay rolling-origin
+LightGBM/XGBoost validation. It does not change or execute either original notebook.
+
 Training-set predictions must not be supplied as OOF. The tool validates keys and
 coverage, but prediction provenance cannot be inferred from values alone.
 
@@ -26,6 +33,42 @@ coverage, but prediction provenance cannot be inferred from values alone.
 ```bash
 python -m pip install -e ".[test]"
 ```
+
+Install the optional model-training dependencies when running Track B:
+
+```bash
+python -m pip install -e ".[training,test]"
+```
+
+## Track B LightGBM/XGBoost rolling OOF
+
+The default schedule simulates an eight-complete-week label maturity lag, uses
+four-week rolling validation blocks, and reserves weeks 80–91 as an unevaluated
+outer quarantine. Early stopping uses only the last mature weeks inside each
+training window; the future OOF block is never passed to `fit()`.
+
+Full real-data run:
+
+```bash
+home-credit-diagnostics train-track-b \
+  --train data/kaggle/base_100features.parquet \
+  --out track_b_outputs_full \
+  --models lightgbm,xgboost \
+  --label-maturity-lag-weeks 8 \
+  --validation-weeks 4 \
+  --outer-quarantine-weeks 12 \
+  --xgboost-device cpu \
+  --lightgbm-device cpu \
+  --run-id track-b-lag8-full-v1
+```
+
+For a quick code-path check, add `--max-folds 1 --max-rows-per-week 1000
+--n-estimators 50 --early-stopping-rounds 10`. Any run with
+`--max-folds` or `--max-rows-per-week` is labeled partial development/smoke and must
+not be reported as final model performance. See the
+[Chinese Track B guide](docs/TRACK_B_MODELING_ZH.md) for the fold timeline, model
+parameters, output schema, and exact interpretation boundary. The checked full run
+is available as a [lightweight result snapshot](track_b_results/README.md).
 
 ## Real Kaggle-data run
 
@@ -70,6 +113,10 @@ home-credit-diagnostics run \
 
 The current original notebooks do not save assembled OOF predictions, so model-level
 diagnostics are intentionally skipped in the checked real run.
+
+Track B rolling OOF covers only its eligible future weeks and therefore must not be
+passed to this older Diagnostics V3 `run --oof` interface, which intentionally
+requires exact `case_id` coverage of the full input matrix.
 
 ### Checked real-run evidence
 
@@ -151,7 +198,7 @@ assumption seen in some AMEX examples while retaining the justified aggregation
 patterns. Transformer sequence modeling is deliberately excluded: Home Credit
 history tables do not form one standardized, homogeneous customer sequence.
 
-## Outputs
+## Diagnostics V3 outputs
 
 - `feature_diagnostics.csv`
 - `bin_diagnostics.csv`

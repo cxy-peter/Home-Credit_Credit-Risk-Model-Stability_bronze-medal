@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 from typing import Sequence
 
@@ -8,6 +9,7 @@ from .aggregation import aggregate_history
 from .io import read_table
 from .pipeline import DiagnosticsConfig, run_diagnostics
 from .synthetic import write_synthetic_demo
+from .training import TrackBTrainingConfig, load_track_b_frame, run_track_b_training
 
 
 def _comma_list(value: str | None) -> list[str] | None:
@@ -75,6 +77,55 @@ def build_parser() -> argparse.ArgumentParser:
         "--tie-breaker-col",
         help="Explicit deterministic order for duplicate customer/time rows",
     )
+
+    training_parser = subparsers.add_parser(
+        "train-track-b",
+        help="Train LightGBM/XGBoost with label-delay rolling-origin OOF validation",
+    )
+    training_parser.add_argument("--train", required=True, type=Path)
+    training_parser.add_argument("--out", required=True, type=Path)
+    training_parser.add_argument("--id-col", default="case_id")
+    training_parser.add_argument("--target-col", default="target")
+    training_parser.add_argument("--week-col", default="week_num")
+    training_parser.add_argument("--models", default="lightgbm,xgboost")
+    training_parser.add_argument("--feature-cols", help="Optional comma-separated feature subset")
+    training_parser.add_argument("--exclude-cols", help="Optional comma-separated model exclusions")
+    training_parser.add_argument("--label-maturity-lag-weeks", type=int, default=8)
+    training_parser.add_argument("--validation-weeks", type=int, default=4)
+    training_parser.add_argument("--step-weeks", type=int, default=4)
+    training_parser.add_argument("--min-mature-train-weeks", type=int, default=32)
+    training_parser.add_argument("--inner-early-stopping-weeks", type=int, default=4)
+    training_parser.add_argument("--outer-quarantine-weeks", type=int, default=12)
+    training_parser.add_argument(
+        "--max-folds",
+        type=int,
+        help="Development/smoke limit; omitted runs every eligible rolling fold",
+    )
+    training_parser.add_argument("--n-estimators", type=int, default=2_000)
+    training_parser.add_argument("--learning-rate", type=float, default=0.03)
+    training_parser.add_argument("--early-stopping-rounds", type=int, default=150)
+    training_parser.add_argument("--n-jobs", type=int, default=12)
+    training_parser.add_argument("--xgboost-device", default="cpu", choices=["cpu", "cuda"])
+    training_parser.add_argument(
+        "--lightgbm-device", default="cpu", choices=["cpu", "gpu", "cuda"]
+    )
+    training_parser.add_argument("--high-cardinality-threshold", type=int, default=10_000)
+    training_parser.add_argument(
+        "--exclude-time-proxies",
+        action="store_true",
+        help="Optional stricter run: keep recognized calendar/time proxies out of the model",
+    )
+    training_parser.add_argument(
+        "--max-rows-per-week",
+        type=int,
+        help="Deterministic real-data smoke sampling; never quote sampled metrics as final",
+    )
+    training_parser.add_argument(
+        "--run-id", help="Audit run ID; defaults to track-b-lag<configured lag>-v1"
+    )
+    training_parser.add_argument(
+        "--dataset-label", default="User-supplied customer-level feature matrix"
+    )
     return parser
 
 
@@ -115,6 +166,57 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Wrote {len(aggregated):,} aggregated rows to {args.out}")
         if args.time_col is None:
             print("Temporal first/last/delta features were not generated because --time-col was omitted.")
+        return 0
+
+    if args.command == "train-track-b":
+        if args.out.exists():
+            parser.error(
+                f"Track B output already exists: {args.out}. Choose a fresh --out path."
+            )
+        config = TrackBTrainingConfig(
+            id_col=args.id_col,
+            target_col=args.target_col,
+            week_col=args.week_col,
+            label_maturity_lag_weeks=args.label_maturity_lag_weeks,
+            validation_weeks=args.validation_weeks,
+            step_weeks=args.step_weeks,
+            min_mature_train_weeks=args.min_mature_train_weeks,
+            inner_early_stopping_weeks=args.inner_early_stopping_weeks,
+            outer_quarantine_weeks=args.outer_quarantine_weeks,
+            max_folds=args.max_folds,
+            models=tuple(_comma_list(args.models) or []),
+            n_estimators=args.n_estimators,
+            learning_rate=args.learning_rate,
+            early_stopping_rounds=args.early_stopping_rounds,
+            n_jobs=args.n_jobs,
+            xgboost_device=args.xgboost_device,
+            lightgbm_device=args.lightgbm_device,
+            high_cardinality_threshold=args.high_cardinality_threshold,
+            exclude_time_proxies=args.exclude_time_proxies,
+            max_rows_per_week=args.max_rows_per_week,
+            run_id=args.run_id or f"track-b-lag{args.label_maturity_lag_weeks}-v1",
+            dataset_label=args.dataset_label,
+            input_path=str(args.train.resolve()),
+            invocation_argv=tuple(sys.argv),
+        )
+        train = load_track_b_frame(args.train, config)
+        run = run_track_b_training(
+            train,
+            args.out,
+            config=config,
+            feature_cols=_comma_list(args.feature_cols),
+            exclude_cols=_comma_list(args.exclude_cols),
+        )
+        print(
+            f"Track B wrote {len(run.oof_predictions):,} rolling OOF rows "
+            f"for {len(run.fold_manifest)} folds to {args.out}"
+        )
+        if args.max_rows_per_week is not None or args.max_folds is not None:
+            print(
+                "PARTIAL DEVELOPMENT/SMOKE ONLY: fold limiting or row sampling was enabled; "
+                "do not quote these metrics as final."
+            )
+        print("Outer quarantine was reserved and was not evaluated by this command.")
         return 0
 
     if args.command == "demo":
