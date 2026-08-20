@@ -1,5 +1,7 @@
 # Home Credit Risk Diagnostics V3
 
+> [中文完整结果报告：真实数据、执行过程、关键结果与限制](docs/RESULT_REPORT_ZH.md)
+
 This repository keeps the two original competition notebooks unchanged and adds a
 standalone diagnostic layer for an **existing customer-level feature parquet**.
 Diagnostics V3 does not rebuild the raw multi-table features and does not rerun the
@@ -30,6 +32,10 @@ python -m pip install -e ".[test]"
 The checked real run uses the Kaggle dataset
 [`diarray/deep-feature-synthesis-home-credit-stability`](https://www.kaggle.com/datasets/diarray/deep-feature-synthesis-home-credit-stability), file
 `base_100features.parquet`. Download it without committing it:
+
+The download command assumes the external Kaggle CLI is installed (for example,
+`python -m pip install kaggle`) and any required login/rules acceptance is complete;
+the CLI is not installed by this project's Python dependencies.
 
 ```bash
 kaggle datasets download \
